@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { VueFlow, useVueFlow, type Connection, ConnectionMode } from '@vue-flow/core'
+import { ref, computed, watch } from 'vue'
+import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
 import { NodeType } from '@/types'
@@ -13,12 +13,9 @@ import ScriptNode from '@/components/nodes/ScriptNode.vue'
 import TransformNode from '@/components/nodes/TransformNode.vue'
 import MockNode from '@/components/nodes/MockNode.vue'
 
-// Use a fixed id so useVueFlow connects to the VueFlow component
-const flowId = 'main-canvas'
-
 const flowStore = useFlowStore()
 
-// Node types for Vue Flow
+// Node types for Vue Flow - must use plain object with string keys matching node.type values
 const nodeTypes = {
   HTTP_REQUEST: HTTPNode,
   GRPC_REQUEST: GRPCNode,
@@ -29,24 +26,25 @@ const nodeTypes = {
   MOCK: MockNode,
 }
 
-// Must call useVueFlow with the SAME id as VueFlow component
-const {
-  onConnect,
-  addNodes,
-  project,
-  fitView,
-  onPaneReady,
-  getNodes,
-  getEdges,
-} = useVueFlow(flowId)
+// Local reactive state for Vue Flow
+const nodes = ref<Node[]>([])
+const edges = ref<Edge[]>([])
 
 const currentFlowId = computed(() => flowStore.currentFlowId)
 const currentFlow = computed(() => currentFlowId.value ? flowStore.flows[currentFlowId.value!] : null)
 
+// Vue Flow composable - no id needed, we use v-model directly
+const {
+  onConnect,
+  project,
+  fitView,
+  onPaneReady,
+} = useVueFlow()
+
 // Initialize nodes from flow store
 watch(currentFlow, (f) => {
   if (f) {
-    const flowNodes = Object.values(f.nodes).map((node) => ({
+    nodes.value = Object.values(f.nodes).map((node) => ({
       id: node.id,
       type: node.type,
       position: node.position,
@@ -56,12 +54,22 @@ watch(currentFlow, (f) => {
         outputs: node.outputs,
       },
     }))
-    addNodes(flowNodes)
+    edges.value = Object.values(f.edges).map((edge) => ({
+      id: edge.id,
+      source: edge.source,
+      sourceHandle: edge.sourceHandle,
+      target: edge.target,
+      targetHandle: edge.targetHandle,
+      type: 'smoothstep',
+      animated: true,
+    }))
+    console.log('Canvas initialized with', nodes.value.length, 'nodes')
   }
 }, { immediate: true })
 
 onPaneReady(() => {
   fitView({ padding: 0.2 })
+  console.log('Vue Flow pane ready')
 })
 
 onConnect((params: Connection) => {
@@ -73,6 +81,16 @@ onConnect((params: Connection) => {
     targetHandle: params.targetHandle!,
     dataMapping: [],
   }
+
+  edges.value.push({
+    id: edge.id,
+    source: edge.source,
+    sourceHandle: edge.sourceHandle,
+    target: edge.target,
+    targetHandle: edge.targetHandle,
+    type: 'smoothstep',
+    animated: true,
+  })
 
   // Update flow store
   const f = currentFlowId.value ? flowStore.flows[currentFlowId.value] : undefined
@@ -102,9 +120,9 @@ function onPaneContextMenu(event: MouseEvent) {
   emit('pane-contextmenu', event)
 }
 
-// Drop handler - must be on the VueFlow pane, not wrapper
 function onDrop(event: DragEvent) {
   event.preventDefault()
+  console.log('Drop event triggered')
 
   const rawData = event.dataTransfer?.getData('application/flowforge-node')
   if (!rawData) {
@@ -121,22 +139,17 @@ function onDrop(event: DragEvent) {
     return
   }
 
-  // Get the VueFlow pane element bounds
   const target = event.target as HTMLElement
   const bounds = target.getBoundingClientRect()
-
   const x = event.clientX - bounds.left
   const y = event.clientY - bounds.top
-
-  // Project to flow coordinates
   const position = project({ x, y })
 
-  console.log('Drop at flow position:', position, 'nodeType:', nodeType)
+  console.log('Creating node:', nodeType, 'at', position)
 
   const node = createNode(nodeType, position)
 
-  // Add node to Vue Flow
-  addNodes([{
+  nodes.value.push({
     id: node.id,
     type: node.type,
     position: node.position,
@@ -145,7 +158,7 @@ function onDrop(event: DragEvent) {
       inputs: node.inputs,
       outputs: node.outputs,
     },
-  }])
+  })
 
   // Update flow store
   const f = currentFlowId.value ? flowStore.flows[currentFlowId.value] : undefined
@@ -221,9 +234,8 @@ defineExpose({
 <template>
   <div class="canvas-wrapper">
     <VueFlow
-      :id="flowId"
-      v-model:nodes="getNodes"
-      v-model:edges="getEdges"
+      v-model:nodes="nodes"
+      v-model:edges="edges"
       :node-types="nodeTypes"
       :snap-to-grid="true"
       :snap-grid="[16, 16]"

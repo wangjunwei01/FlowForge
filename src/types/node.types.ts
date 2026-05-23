@@ -29,6 +29,9 @@ export interface HTTPNodeData extends NodeData {
   followRedirects?: boolean
   proxy?: ProxyConfig
   ssl?: SSLConfig
+  errorStrategy?: import('./execution.types').ErrorStrategy
+  retryCount?: number
+  retryDelay?: number
 }
 
 export interface AuthConfig {

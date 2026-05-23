@@ -1,11 +1,24 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Environment } from '@/types'
 import { useProjectStore } from '@/stores/project'
 
 export const useEnvironmentStore = defineStore('environment', () => {
   const environments = ref<Environment[]>([{ id: 'default', name: 'Default', variables: [] }])
   const activeId = ref('default')
+
+  // Get active environment variables as a key-value map
+  const activeVariables = computed<Record<string, string>>(() => {
+    const env = environments.value.find((e) => e.id === activeId.value)
+    if (!env) return {}
+    const result: Record<string, string> = {}
+    for (const v of env.variables) {
+      if (v.enabled) {
+        result[v.key] = v.value
+      }
+    }
+    return result
+  })
 
   async function addEnvironment(env: Environment): Promise<void> {
     environments.value.push(env)
@@ -55,6 +68,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
   return {
     environments,
     activeId,
+    activeVariables,
     addEnvironment,
     removeEnvironment,
     setActive,

@@ -54,4 +54,33 @@ describe('environmentStore', () => {
     expect(store.environments).toHaveLength(2)
     expect(store.activeId).toBe('dev')
   })
+
+  it('activeVariables returns enabled variables as key-value map', () => {
+    const store = useEnvironmentStore()
+    store.environments = [
+      {
+        id: 'default',
+        name: 'Default',
+        variables: [
+          { key: 'API_URL', value: 'https://api.example.com', enabled: true },
+          { key: 'API_KEY', value: 'secret123', enabled: true },
+          { key: 'DISABLED_VAR', value: 'should-not-appear', enabled: false },
+        ],
+      },
+    ]
+    store.activeId = 'default'
+
+    expect(store.activeVariables).toEqual({
+      API_URL: 'https://api.example.com',
+      API_KEY: 'secret123',
+    })
+  })
+
+  it('activeVariables returns empty object when no environment', () => {
+    const store = useEnvironmentStore()
+    store.environments = []
+    store.activeId = 'nonexistent'
+
+    expect(store.activeVariables).toEqual({})
+  })
 })

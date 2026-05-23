@@ -1,0 +1,35 @@
+export default {
+  common: {
+    welcome: 'Welcome to FlowForge',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    create: 'Create',
+    search: 'Search',
+    loading: 'Loading...',
+    error: 'Error',
+    success: 'Success',
+    warning: 'Warning',
+    info: 'Info',
+  },
+  menu: {
+    file: 'File',
+    edit: 'Edit',
+    view: 'View',
+    run: 'Run',
+    help: 'Help',
+  },
+  theme: {
+    light: 'Light Mode',
+    dark: 'Dark Mode',
+    toggle: 'Toggle Theme',
+  },
+  sidebar: {
+    nodes: 'Nodes',
+    flows: 'Flows',
+    environments: 'Environments',
+    settings: 'Settings',
+  },
+}

@@ -1,0 +1,35 @@
+export default {
+  common: {
+    welcome: '欢迎使用 FlowForge',
+    confirm: '确认',
+    cancel: '取消',
+    save: '保存',
+    delete: '删除',
+    edit: '编辑',
+    create: '创建',
+    search: '搜索',
+    loading: '加载中...',
+    error: '错误',
+    success: '成功',
+    warning: '警告',
+    info: '提示',
+  },
+  menu: {
+    file: '文件',
+    edit: '编辑',
+    view: '视图',
+    run: '运行',
+    help: '帮助',
+  },
+  theme: {
+    light: '亮色模式',
+    dark: '暗色模式',
+    toggle: '切换主题',
+  },
+  sidebar: {
+    nodes: '节点',
+    flows: '流程',
+    environments: '环境',
+    settings: '设置',
+  },
+}

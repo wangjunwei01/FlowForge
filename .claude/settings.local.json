@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(stty size *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(/d/ProgramData/nodejs/node --version)",
+      "Bash(python3 -c ' *)",
+      "Bash(grep *)",
+      "Bash(python3 -c 'import json; json.load\\(open\\('\\\\''__TRACKED_VAR__/.claude/settings.json'\\\\''\\)\\)')",
+      "Bash(node *)",
+      "Bash(pnpm *)",
+      "Bash(rustc *)",
+      "Bash(cargo *)",
+      "Bash(npm *)",
+      "Bash(git *)",
+      "Bash(corepack --version)",
+      "Bash(where pnpm *)",
+      "Bash(corepack enable *)",
+      "Bash(corepack prepare *)",
+      "Bash(npx tauri *)"
+    ]
+  }
+}

@@ -1,0 +1,139 @@
+:root {
+  /* Colors - Light Theme */
+  --color-primary: #42b883;
+  --color-primary-light: #42d392;
+  --color-primary-dark: #33a06f;
+  --color-success: #67c23a;
+  --color-warning: #e6a23c;
+  --color-danger: #f56c6c;
+  --color-info: #909399;
+
+  /* Background */
+  --bg-color: #ffffff;
+  --bg-color-secondary: #f5f7fa;
+  --bg-color-tertiary: #e8eaed;
+  --bg-sidebar: #f0f2f5;
+  --bg-panel: #ffffff;
+
+  /* Text */
+  --text-color-primary: #303133;
+  --text-color-regular: #606266;
+  --text-color-secondary: #909399;
+  --text-color-placeholder: #c0c4cc;
+
+  /* Border */
+  --border-color: #dcdfe6;
+  --border-color-light: #e4e7ed;
+  --border-color-lighter: #ebeef5;
+
+  /* Canvas */
+  --canvas-bg: #f5f7fa;
+  --canvas-grid: #e8eaed;
+  --canvas-node-bg: #ffffff;
+  --canvas-node-border: #dcdfe6;
+  --canvas-node-selected: #42b883;
+  --canvas-edge: #c0c4cc;
+  --canvas-edge-selected: #42b883;
+
+  /* Dimensions */
+  --sidebar-width: 260px;
+  --config-panel-width: 360px;
+  --header-height: 40px;
+  --tab-bar-height: 36px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Font */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+  --font-size-base: 14px;
+  --font-size-sm: 12px;
+  --font-size-lg: 16px;
+
+  /* Transition */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+
+[data-theme='dark'] {
+  /* Colors - Dark Theme */
+  --color-primary: #42d392;
+  --color-primary-light: #5ae0a4;
+  --color-primary-dark: #42b883;
+
+  /* Background */
+  --bg-color: #1a1a2e;
+  --bg-color-secondary: #16213e;
+  --bg-color-tertiary: #1e2a45;
+  --bg-sidebar: #1e2a45;
+  --bg-panel: #16213e;
+
+  /* Text */
+  --text-color-primary: #e0e0e0;
+  --text-color-regular: #b0b0b0;
+  --text-color-secondary: #808080;
+  --text-color-placeholder: #505050;
+
+  /* Border */
+  --border-color: #2d3a4f;
+  --border-color-light: #253350;
+  --border-color-lighter: #1e2a45;
+
+  /* Canvas */
+  --canvas-bg: #1a1a2e;
+  --canvas-grid: #253350;
+  --canvas-node-bg: #16213e;
+  --canvas-node-border: #2d3a4f;
+  --canvas-node-selected: #42d392;
+  --canvas-edge: #505050;
+  --canvas-edge-selected: #42d392;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--text-color-primary);
+  background-color: var(--bg-color);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-color-secondary);
+}

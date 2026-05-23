@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { VueFlow, useVueFlow, type Connection, ConnectionMode } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
@@ -11,24 +11,24 @@ import { nodeComponents } from '@/components/nodes'
 const canvasStore = useCanvasStore()
 const flowStore = useFlowStore()
 
+// Local reactive nodes/edges for Vue Flow
+const localNodes = ref<any[]>([])
+const localEdges = ref<any[]>([])
+
 const {
   onConnect,
-  onNodesChange,
-  onEdgesChange,
   addNodes,
   project,
   fitView,
-  getNodes,
-  getEdges,
   onPaneReady,
 } = useVueFlow()
 
 const flowId = computed(() => flowStore.currentFlowId)
 const flow = computed(() => flowId.value ? flowStore.flows[flowId.value!] : null)
 
-const vueFlowNodes = computed(() => {
-  const nodes = flow.value?.nodes ?? {}
-  return Object.values(nodes).map((node) => ({
+// Sync canvas store nodes with local nodes for Vue Flow
+watch(() => canvasStore.nodes, (nodes) => {
+  localNodes.value = Object.values(nodes).map((node) => ({
     id: node.id,
     type: node.type,
     position: node.position,
@@ -38,11 +38,11 @@ const vueFlowNodes = computed(() => {
       outputs: node.outputs,
     },
   }))
-})
+}, { immediate: true, deep: true })
 
-const vueFlowEdges = computed(() => {
-  const edges = flow.value?.edges ?? {}
-  return Object.values(edges).map((edge) => ({
+// Sync canvas store edges with local edges for Vue Flow
+watch(() => canvasStore.edges, (edges) => {
+  localEdges.value = Object.values(edges).map((edge) => ({
     id: edge.id,
     source: edge.source,
     sourceHandle: edge.sourceHandle,
@@ -51,7 +51,16 @@ const vueFlowEdges = computed(() => {
     type: 'smoothstep',
     animated: true,
   }))
-})
+}, { immediate: true, deep: true })
+
+// Initialize from flow store if canvas is empty
+watch(flow, (f) => {
+  if (f && Object.keys(canvasStore.nodes).length === 0) {
+    // Load nodes from flow into canvas store
+    Object.values(f.nodes).forEach(node => canvasStore.addNode(node))
+    Object.values(f.edges).forEach(edge => canvasStore.addEdge(edge))
+  }
+}, { immediate: true })
 
 onPaneReady(() => {
   fitView({ padding: 0.2 })
@@ -67,24 +76,12 @@ onConnect((params: Connection) => {
     dataMapping: [],
   }
   canvasStore.addEdge(edge)
-})
 
-onNodesChange((changes) => {
-  changes.forEach((change) => {
-    if (change.type === 'position' && change.position) {
-      canvasStore.updateNode(change.id, { position: change.position })
-    } else if (change.type === 'remove') {
-      canvasStore.removeNode(change.id)
-    }
-  })
-})
-
-onEdgesChange((changes) => {
-  changes.forEach((change) => {
-    if (change.type === 'remove') {
-      canvasStore.removeEdge(change.id)
-    }
-  })
+  // Also update flow store
+  const f = flowId.value ? flowStore.flows[flowId.value] : undefined
+  if (f) {
+    f.edges[edge.id] = edge
+  }
 })
 
 const emit = defineEmits<{
@@ -121,6 +118,24 @@ function onDrop(event: DragEvent) {
 
   const node = createNode(nodeType, position)
   canvasStore.addNode(node)
+
+  // Also update flow store
+  const f = flowId.value ? flowStore.flows[flowId.value] : undefined
+  if (f) {
+    f.nodes[node.id] = node
+  }
+
+  // Add to Vue Flow directly
+  addNodes([{
+    id: node.id,
+    type: node.type,
+    position: node.position,
+    data: {
+      ...node,
+      inputs: node.inputs,
+      outputs: node.outputs,
+    },
+  }])
 }
 
 function onDragOver(event: DragEvent) {
@@ -183,14 +198,6 @@ function getDefaultLabel(type: NodeType): string {
   return labels[type] ?? 'Node'
 }
 
-watch([vueFlowNodes, vueFlowEdges], () => {
-  const existingNodeIds = new Set(getNodes.value.map(n => n.id))
-  const newNodes = vueFlowNodes.value.filter((n) => !existingNodeIds.has(n.id))
-  if (newNodes.length > 0) {
-    addNodes(newNodes)
-  }
-}, { immediate: true })
-
 defineExpose({
   fitView,
   project,
@@ -204,8 +211,8 @@ defineExpose({
     @dragover="onDragOver"
   >
     <VueFlow
-      v-model:nodes="getNodes"
-      v-model:edges="getEdges"
+      v-model:nodes="localNodes"
+      v-model:edges="localEdges"
       :node-types="nodeComponents"
       :snap-to-grid="true"
       :snap-grid="[16, 16]"

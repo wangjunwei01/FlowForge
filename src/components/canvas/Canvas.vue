@@ -120,18 +120,24 @@ function onPaneContextMenu(event: MouseEvent) {
   emit('pane-contextmenu', event)
 }
 
-function onDrop(event: DragEvent) {
-  event.preventDefault()
-  console.log('Drop event triggered')
+function onDrop(event: MouseEvent) {
+  console.log('Pane drop event triggered', event)
+
+  // Get the native drag event from the composed path
+  const dragEvent = event as unknown as DragEvent
+  if (!dragEvent.dataTransfer) {
+    console.warn('No dataTransfer in drop event')
+    return
+  }
 
   // Try text/plain first (more compatible)
-  let rawData = event.dataTransfer?.getData('text/plain')
+  let rawData = dragEvent.dataTransfer.getData('text/plain')
   if (!rawData) {
-    rawData = event.dataTransfer?.getData('application/flowforge-node')
+    rawData = dragEvent.dataTransfer.getData('application/flowforge-node')
   }
 
   if (!rawData) {
-    console.warn('No drag data found')
+    console.warn('No drag data found in drop')
     return
   }
 
@@ -172,11 +178,9 @@ function onDrop(event: DragEvent) {
   }
 }
 
-function onDragOver(event: DragEvent) {
+function onDragOver(event: MouseEvent) {
+  // Prevent default to allow drop
   event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
 }
 
 function createNode(type: NodeType, position: { x: number; y: number }): FlowNode {
@@ -252,8 +256,8 @@ defineExpose({
       @node-contextmenu="onNodeContextMenu"
       @edge-contextmenu="onEdgeContextMenu"
       @pane-contextmenu="onPaneContextMenu"
-      @drop="onDrop"
-      @dragover="onDragOver"
+      @pane-drop="onDrop"
+      @pane-dragover="onDragOver"
     >
       <Background :gap="16" :size="1" pattern-color="#e5e7eb" />
     </VueFlow>

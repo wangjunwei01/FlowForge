@@ -1,0 +1,13 @@
+export enum ErrorCode {
+  UNKNOWN = 'E001',
+  IPC_ERROR = 'E002',
+  VALIDATION = 'E003',
+  NOT_FOUND = 'E004',
+  PERMISSION = 'E005',
+  NETWORK = 'E006',
+  TIMEOUT = 'E007',
+  PARSE = 'E008',
+  FS_ERROR = 'E009',
+  SCRIPT_ERROR = 'E010',
+  EXECUTION_ERROR = 'E011',
+}

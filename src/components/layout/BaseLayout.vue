@@ -1,10 +1,27 @@
 <script setup lang="ts">
+import { useTheme } from '@/composables/useTheme'
+import { useI18n } from 'vue-i18n'
+
+const { currentTheme, toggleTheme } = useTheme()
+const { locale } = useI18n()
+
+function toggleLocale() {
+  locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+}
 </script>
 
 <template>
   <div class="base-layout">
     <header class="layout-header">
       <div class="header-title">FlowForge</div>
+      <div class="header-actions">
+        <button class="header-btn" :title="$t('theme.toggle')" @click="toggleTheme">
+          {{ currentTheme === 'light' ? '🌙' : '☀️' }}
+        </button>
+        <button class="header-btn" @click="toggleLocale">
+          {{ locale === 'zh-CN' ? 'EN' : '中' }}
+        </button>
+      </div>
     </header>
     <div class="layout-body">
       <aside class="layout-sidebar">
@@ -46,6 +63,31 @@
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.header-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-regular);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.header-btn:hover {
+  background-color: var(--bg-color-tertiary);
+  border-color: var(--color-primary);
 }
 
 .layout-body {

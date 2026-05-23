@@ -33,3 +33,5 @@ coverage/
 
 # Tauri
 src-tauri/WixToolset/
+src-tauri/gen/
+src-tauri/target/

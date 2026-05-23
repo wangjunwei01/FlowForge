@@ -1,4 +1,4 @@
 #[tauri::command]
-fn greet(name: &str) -> String {
+pub fn greet(name: &str) -> String {
     format!("Hello, {}! Welcome to FlowForge.", name)
 }

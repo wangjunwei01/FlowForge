@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
 import { NodeType } from '@/types'
 import { useFlowStore } from '@/stores/flow'
+import { useDragDropStore } from '@/stores/dragDrop'
 import HTTPNode from '@/components/nodes/HTTPNode.vue'
 import GRPCNode from '@/components/nodes/GRPCNode.vue'
 import WebSocketNode from '@/components/nodes/WebSocketNode.vue'
@@ -14,8 +15,9 @@ import TransformNode from '@/components/nodes/TransformNode.vue'
 import MockNode from '@/components/nodes/MockNode.vue'
 
 const flowStore = useFlowStore()
+const dragDropStore = useDragDropStore()
 
-// Node types for Vue Flow - must use plain object with string keys matching node.type values
+// Node types for Vue Flow
 const nodeTypes = {
   HTTP_REQUEST: HTTPNode,
   GRPC_REQUEST: GRPCNode,
@@ -29,17 +31,13 @@ const nodeTypes = {
 // Local reactive state for Vue Flow
 const nodes = ref<Node[]>([])
 const edges = ref<Edge[]>([])
+const canvasRef = ref<HTMLElement | null>(null)
 
 const currentFlowId = computed(() => flowStore.currentFlowId)
 const currentFlow = computed(() => currentFlowId.value ? flowStore.flows[currentFlowId.value!] : null)
 
-// Vue Flow composable - no id needed, we use v-model directly
-const {
-  onConnect,
-  project,
-  fitView,
-  onPaneReady,
-} = useVueFlow()
+// Vue Flow composable
+const { onConnect, project, fitView, onPaneReady } = useVueFlow()
 
 // Initialize nodes from flow store
 watch(currentFlow, (f) => {
@@ -48,11 +46,7 @@ watch(currentFlow, (f) => {
       id: node.id,
       type: node.type,
       position: node.position,
-      data: {
-        ...node,
-        inputs: node.inputs,
-        outputs: node.outputs,
-      },
+      data: { ...node, inputs: node.inputs, outputs: node.outputs },
     }))
     edges.value = Object.values(f.edges).map((edge) => ({
       id: edge.id,
@@ -81,7 +75,6 @@ onConnect((params: Connection) => {
     targetHandle: params.targetHandle!,
     dataMapping: [],
   }
-
   edges.value.push({
     id: edge.id,
     source: edge.source,
@@ -91,12 +84,6 @@ onConnect((params: Connection) => {
     type: 'smoothstep',
     animated: true,
   })
-
-  // Update flow store
-  const f = currentFlowId.value ? flowStore.flows[currentFlowId.value] : undefined
-  if (f) {
-    f.edges[edge.id] = edge
-  }
 })
 
 const emit = defineEmits<{
@@ -120,104 +107,82 @@ function onPaneContextMenu(event: MouseEvent) {
   emit('pane-contextmenu', event)
 }
 
-function onDrop(event: MouseEvent) {
-  console.log('Pane drop event triggered', event)
+// Click-to-place: when in placement mode, clicking on the pane places a node
+function onPaneClick(event: MouseEvent) {
+  if (!dragDropStore.isDragging || !dragDropStore.draggedNodeType) return
 
-  // Get the native drag event from the composed path
-  const dragEvent = event as unknown as DragEvent
-  if (!dragEvent.dataTransfer) {
-    console.warn('No dataTransfer in drop event')
-    return
-  }
+  console.log('Pane click, placing node:', dragDropStore.draggedNodeType)
 
-  // Try text/plain first (more compatible)
-  let rawData = dragEvent.dataTransfer.getData('text/plain')
-  if (!rawData) {
-    rawData = dragEvent.dataTransfer.getData('application/flowforge-node')
-  }
+  const bounds = canvasRef.value?.getBoundingClientRect()
+  if (!bounds) return
 
-  if (!rawData) {
-    console.warn('No drag data found in drop')
-    return
-  }
-
-  let nodeType: NodeType
-  try {
-    const data = JSON.parse(rawData) as { nodeType: NodeType }
-    nodeType = data.nodeType
-  } catch (e) {
-    console.error('Failed to parse drag data:', e)
-    return
-  }
-
-  const target = event.target as HTMLElement
-  const bounds = target.getBoundingClientRect()
   const x = event.clientX - bounds.left
   const y = event.clientY - bounds.top
   const position = project({ x, y })
 
-  console.log('Creating node:', nodeType, 'at', position)
+  addNodeToCanvas(dragDropStore.draggedNodeType, position)
+  dragDropStore.endDrag()
+}
 
+// Keyboard handler for canceling placement
+function onKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && dragDropStore.isDragging) {
+    console.log('Placement canceled via Escape key')
+    dragDropStore.endDrag()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+})
+
+function addNodeToCanvas(nodeType: NodeType, position: { x: number; y: number }) {
   const node = createNode(nodeType, position)
 
   nodes.value.push({
     id: node.id,
     type: node.type,
     position: node.position,
-    data: {
-      ...node,
-      inputs: node.inputs,
-      outputs: node.outputs,
-    },
+    data: { ...node, inputs: node.inputs, outputs: node.outputs },
   })
 
-  // Update flow store
   const f = currentFlowId.value ? flowStore.flows[currentFlowId.value] : undefined
   if (f) {
     f.nodes[node.id] = node
   }
-}
 
-function onDragOver(event: MouseEvent) {
-  // Prevent default to allow drop
-  event.preventDefault()
+  console.log('Node added, total nodes:', nodes.value.length)
 }
 
 function createNode(type: NodeType, position: { x: number; y: number }): FlowNode {
   const id = `node-${Date.now()}`
-  const defaultInputs = [{ id: 'input', name: 'Input', type: 'input' as const, dataType: 'any' as const, required: false }]
-  const defaultOutputs = [{ id: 'output', name: 'Output', type: 'output' as const, dataType: 'any' as const, required: false }]
-
+  const inputs = [{ id: 'input', name: 'Input', type: 'input' as const, dataType: 'any' as const, required: false }]
+  const outputs = [{ id: 'output', name: 'Output', type: 'output' as const, dataType: 'any' as const, required: false }]
   return {
     id,
     type,
     position,
     data: getDefaultNodeData(type),
-    inputs: defaultInputs,
-    outputs: defaultOutputs,
+    inputs,
+    outputs,
   }
 }
 
 function getDefaultNodeData(type: NodeType): any {
-  const baseData = { label: getDefaultLabel(type) }
-
+  const base = { label: getDefaultLabel(type) }
   switch (type) {
-    case NodeType.HTTP_REQUEST:
-      return { ...baseData, method: 'GET', url: '', headers: {}, params: {} }
-    case NodeType.GRPC_REQUEST:
-      return { ...baseData, protoFile: '', serviceName: '', methodName: '', address: '', useTLS: false, requestMessage: '' }
-    case NodeType.WEBSOCKET:
-      return { ...baseData, url: '', protocols: [], messages: [] }
-    case NodeType.SSE:
-      return { ...baseData, url: '', headers: {} }
-    case NodeType.SCRIPT:
-      return { ...baseData, language: 'javascript', code: '' }
-    case NodeType.DATA_TRANSFORM:
-      return { ...baseData, inputMapping: [], outputMapping: [] }
-    case NodeType.MOCK:
-      return { ...baseData, port: 3000, routes: [], autoStart: false }
-    default:
-      return baseData
+    case NodeType.HTTP_REQUEST: return { ...base, method: 'GET', url: '', headers: {}, params: {} }
+    case NodeType.GRPC_REQUEST: return { ...base, protoFile: '', serviceName: '', methodName: '', address: '', useTLS: false, requestMessage: '' }
+    case NodeType.WEBSOCKET: return { ...base, url: '', protocols: [], messages: [] }
+    case NodeType.SSE: return { ...base, url: '', headers: {} }
+    case NodeType.SCRIPT: return { ...base, language: 'javascript', code: '' }
+    case NodeType.DATA_TRANSFORM: return { ...base, inputMapping: [], outputMapping: [] }
+    case NodeType.MOCK: return { ...base, port: 3000, routes: [], autoStart: false }
+    default: return base
   }
 }
 
@@ -234,14 +199,14 @@ function getDefaultLabel(type: NodeType): string {
   return labels[type] ?? 'Node'
 }
 
-defineExpose({
-  fitView,
-  project,
-})
+defineExpose({ fitView, project })
 </script>
 
 <template>
-  <div class="canvas-wrapper">
+  <div
+    ref="canvasRef"
+    class="canvas-wrapper"
+  >
     <VueFlow
       v-model:nodes="nodes"
       v-model:edges="edges"
@@ -256,11 +221,15 @@ defineExpose({
       @node-contextmenu="onNodeContextMenu"
       @edge-contextmenu="onEdgeContextMenu"
       @pane-contextmenu="onPaneContextMenu"
-      @pane-drop="onDrop"
-      @pane-dragover="onDragOver"
+      @pane-click="onPaneClick"
     >
       <Background :gap="16" :size="1" pattern-color="#e5e7eb" />
     </VueFlow>
+    <!-- Placement mode overlay -->
+    <div v-if="dragDropStore.isDragging" class="placement-overlay">
+      <span class="placement-hint">Click to place {{ dragDropStore.draggedNodeType }}</span>
+      <span class="placement-cancel">Press Escape to cancel</span>
+    </div>
   </div>
 </template>
 
@@ -272,12 +241,47 @@ defineExpose({
 .canvas-wrapper {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .vue-flow {
   width: 100%;
   height: 100%;
   background: var(--canvas-bg);
+}
+
+.placement-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(66, 184, 131, 0.08);
+  border: 2px dashed var(--color-primary);
+  z-index: 10;
+}
+
+.placement-hint {
+  padding: 12px 24px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.placement-cancel {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  background: var(--bg-color-secondary);
+  padding: 4px 12px;
+  border-radius: 4px;
 }
 
 .dark .vue-flow__background {
@@ -290,5 +294,9 @@ defineExpose({
 
 .dark .vue-flow__handle {
   border-color: #1f2937;
+}
+
+.dark .placement-overlay {
+  background: rgba(66, 211, 146, 0.08);
 }
 </style>

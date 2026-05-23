@@ -2,8 +2,10 @@
 import { ref, computed } from 'vue'
 import { NodeType, NODE_TYPE_LABELS } from '@/constants/node-types'
 import { useDragDrop } from '@/composables/useDragDrop'
+import { useDragDropStore } from '@/stores/dragDrop'
 
 const { onDragStart } = useDragDrop()
+const dragDropStore = useDragDropStore()
 
 const searchQuery = ref('')
 
@@ -28,6 +30,15 @@ const nodeIcons: Record<NodeType, string> = {
   [NodeType.DATA_TRANSFORM]: '🔄',
   [NodeType.MOCK]: '🎭',
 }
+
+// Click-to-select for placement mode (primary for Tauri)
+function onItemClick(nodeType: NodeType, event: MouseEvent) {
+  dragDropStore.startDrag(nodeType)
+  // Also try HTML5 DnD for browsers
+  if (event.type === 'dragstart') {
+    onDragStart(event as DragEvent, nodeType)
+  }
+}
 </script>
 
 <template>
@@ -45,12 +56,19 @@ const nodeIcons: Record<NodeType, string> = {
         v-for="type in filteredNodes"
         :key="type"
         class="node-item"
+        :class="{ selected: dragDropStore.draggedNodeType === type && dragDropStore.isDragging }"
         draggable="true"
-        @dragstart="onDragStart($event, type)"
+        @click="onItemClick(type, $event)"
+        @dragstart="onItemClick(type, $event)"
       >
         <span class="node-icon">{{ nodeIcons[type] }}</span>
         <span class="node-label">{{ NODE_TYPE_LABELS[type] }}</span>
       </div>
+    </div>
+    <!-- Instructions -->
+    <div class="sidebar-footer">
+      <p class="hint">Click to select, then click canvas to place</p>
+      <p class="hint">Or drag and drop</p>
     </div>
   </div>
 </template>
@@ -96,7 +114,7 @@ const nodeIcons: Record<NodeType, string> = {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   background: var(--bg-color-secondary);
-  cursor: grab;
+  cursor: pointer;
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast);
@@ -107,8 +125,13 @@ const nodeIcons: Record<NodeType, string> = {
   border-color: var(--color-primary);
 }
 
-.node-item:active {
-  cursor: grabbing;
+.node-item.selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.node-item.selected .node-label {
+  color: #fff;
 }
 
 .node-icon {
@@ -118,6 +141,18 @@ const nodeIcons: Record<NodeType, string> = {
 .node-label {
   color: var(--text-color-primary);
   font-size: var(--font-size-sm);
+}
+
+.sidebar-footer {
+  padding: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-color-secondary);
+  text-align: center;
+  margin: 2px 0;
 }
 
 /* Dark mode */

@@ -32,4 +32,44 @@ export default {
     environments: 'Environments',
     settings: 'Settings',
   },
+  nodeEditor: {
+    title: 'Node Configuration',
+    http: {
+      method: 'Method',
+      url: 'URL',
+      headers: 'Headers',
+      params: 'Query Params',
+      body: 'Body',
+    },
+    grpc: {
+      protoFile: 'Proto File',
+      serviceName: 'Service Name',
+      methodName: 'Method Name',
+      address: 'Address',
+      useTLS: 'Use TLS',
+      requestMessage: 'Request Message',
+    },
+    websocket: {
+      url: 'WebSocket URL',
+      protocols: 'Protocols',
+      messages: 'Messages',
+    },
+    sse: {
+      url: 'SSE URL',
+      headers: 'Headers',
+    },
+    script: {
+      language: 'Language',
+      code: 'Code',
+    },
+    transform: {
+      inputMapping: 'Input Mapping',
+      outputMapping: 'Output Mapping',
+    },
+    mock: {
+      port: 'Port',
+      routes: 'Routes',
+      autoStart: 'Auto Start',
+    },
+  },
 }

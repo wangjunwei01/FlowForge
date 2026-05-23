@@ -6,6 +6,7 @@ import type { FlowNode, FlowEdge } from '@/types'
 import { NodeType } from '@/types'
 import { useFlowStore } from '@/stores/flow'
 import { useDragDropStore } from '@/stores/dragDrop'
+import { useCanvasStore } from '@/stores/canvas'
 import HTTPNode from '@/components/nodes/HTTPNode.vue'
 import GRPCNode from '@/components/nodes/GRPCNode.vue'
 import WebSocketNode from '@/components/nodes/WebSocketNode.vue'
@@ -16,6 +17,7 @@ import MockNode from '@/components/nodes/MockNode.vue'
 
 const flowStore = useFlowStore()
 const dragDropStore = useDragDropStore()
+const canvasStore = useCanvasStore()
 
 // Node types for Vue Flow — markRaw prevents Vue from making components reactive
 const nodeTypes = {
@@ -37,7 +39,7 @@ const currentFlowId = computed(() => flowStore.currentFlowId)
 const currentFlow = computed(() => currentFlowId.value ? flowStore.flows[currentFlowId.value!] : null)
 
 // Vue Flow composable
-const { onConnect, project, fitView, onPaneReady } = useVueFlow()
+const { onConnect, project, fitView, onPaneReady, getSelectedNodes, getSelectedEdges } = useVueFlow()
 
 // Initialize nodes from flow store
 watch(currentFlow, (f) => {
@@ -85,6 +87,12 @@ onConnect((params: Connection) => {
     animated: true,
   })
 })
+
+// Sync selection with canvas store using Vue Flow getters
+watch([() => getSelectedNodes.value, () => getSelectedEdges.value], () => {
+  canvasStore.selectedNodeIds = new Set(getSelectedNodes.value.map((n: Node) => n.id))
+  canvasStore.selectedEdgeIds = new Set(getSelectedEdges.value.map((e: Edge) => e.id))
+}, { deep: true })
 
 const emit = defineEmits<{
   (e: 'node-contextmenu', event: MouseEvent, nodeId: string): void

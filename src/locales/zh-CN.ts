@@ -32,4 +32,44 @@ export default {
     environments: '环境',
     settings: '设置',
   },
+  nodeEditor: {
+    title: '节点配置',
+    http: {
+      method: '请求方法',
+      url: '请求地址',
+      headers: '请求头',
+      params: '查询参数',
+      body: '请求体',
+    },
+    grpc: {
+      protoFile: 'Proto 文件',
+      serviceName: '服务名称',
+      methodName: '方法名称',
+      address: '服务地址',
+      useTLS: '使用 TLS',
+      requestMessage: '请求消息',
+    },
+    websocket: {
+      url: 'WebSocket 地址',
+      protocols: '子协议',
+      messages: '消息列表',
+    },
+    sse: {
+      url: 'SSE 地址',
+      headers: '请求头',
+    },
+    script: {
+      language: '脚本语言',
+      code: '代码',
+    },
+    transform: {
+      inputMapping: '输入映射',
+      outputMapping: '输出映射',
+    },
+    mock: {
+      port: '端口',
+      routes: '路由配置',
+      autoStart: '自动启动',
+    },
+  },
 }

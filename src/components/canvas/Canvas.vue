@@ -7,6 +7,9 @@ import { NodeType } from '@/types'
 import { useFlowStore } from '@/stores/flow'
 import { useDragDropStore } from '@/stores/dragDrop'
 import { useCanvasStore } from '@/stores/canvas'
+import { useHistoryStore } from '@/stores/history'
+import { useTabStore } from '@/stores/tabs'
+import { useKeyboardHandler } from '@/composables/useKeyboardHandler'
 import HTTPNode from '@/components/nodes/HTTPNode.vue'
 import GRPCNode from '@/components/nodes/GRPCNode.vue'
 import WebSocketNode from '@/components/nodes/WebSocketNode.vue'
@@ -18,6 +21,9 @@ import MockNode from '@/components/nodes/MockNode.vue'
 const flowStore = useFlowStore()
 const dragDropStore = useDragDropStore()
 const canvasStore = useCanvasStore()
+const historyStore = useHistoryStore()
+const tabStore = useTabStore()
+const keyboardHandler = useKeyboardHandler()
 
 // Node types for Vue Flow — markRaw prevents Vue from making components reactive
 const nodeTypes = {
@@ -39,7 +45,7 @@ const currentFlowId = computed(() => flowStore.currentFlowId)
 const currentFlow = computed(() => currentFlowId.value ? flowStore.flows[currentFlowId.value!] : null)
 
 // Vue Flow composable
-const { onConnect, project, fitView, onPaneReady, getSelectedNodes, getSelectedEdges } = useVueFlow()
+const { onConnect, project, fitView, onPaneReady, getSelectedNodes, getSelectedEdges, onNodesChange, onEdgesChange } = useVueFlow()
 
 // Initialize nodes from flow store
 watch(currentFlow, (f) => {
@@ -60,6 +66,8 @@ watch(currentFlow, (f) => {
       animated: true,
       markerEnd: MarkerType.ArrowClosed,
     }))
+    // Clear history when switching flows
+    historyStore.clear()
     console.log('Canvas initialized with', nodes.value.length, 'nodes')
   }
 }, { immediate: true })
@@ -67,6 +75,50 @@ watch(currentFlow, (f) => {
 onPaneReady(() => {
   fitView({ padding: 0.2 })
   console.log('Vue Flow pane ready')
+})
+
+// Handle node changes from Vue Flow (position, add, remove)
+onNodesChange((changes) => {
+  const flow = currentFlow.value
+  if (!flow) return
+
+  changes.forEach((change) => {
+    if (change.type === 'position' && change.position && change.dragging === false) {
+      // Node drag ended - record position change
+      const node = flow.nodes[change.id]
+      if (node) {
+        const oldPosition = { ...node.position }
+        node.position = change.position
+
+        historyStore.pushAction({
+          type: 'move_node',
+          timestamp: Date.now(),
+          data: { nodeId: change.id, oldPosition, newPosition: change.position },
+        })
+
+        tabStore.markDirty(tabStore.activeTabId ?? '')
+      }
+    } else if (change.type === 'remove') {
+      // Node removed via Vue Flow
+      delete flow.nodes[change.id]
+      canvasStore.selectedNodeIds.delete(change.id)
+      tabStore.markDirty(tabStore.activeTabId ?? '')
+    }
+  })
+})
+
+// Handle edge changes from Vue Flow
+onEdgesChange((changes) => {
+  const flow = currentFlow.value
+  if (!flow) return
+
+  changes.forEach((change) => {
+    if (change.type === 'remove') {
+      delete flow.edges[change.id]
+      canvasStore.selectedEdgeIds.delete(change.id)
+      tabStore.markDirty(tabStore.activeTabId ?? '')
+    }
+  })
 })
 
 onConnect((params: Connection) => {
@@ -78,6 +130,7 @@ onConnect((params: Connection) => {
     targetHandle: params.targetHandle!,
     dataMapping: [],
   }
+
   edges.value.push({
     id: edge.id,
     source: edge.source,
@@ -88,6 +141,18 @@ onConnect((params: Connection) => {
     animated: true,
     markerEnd: MarkerType.ArrowClosed,
   })
+
+  // Add to flow store
+  const flow = currentFlow.value
+  if (flow) {
+    flow.edges[edge.id] = edge
+    historyStore.pushAction({
+      type: 'add_edge',
+      timestamp: Date.now(),
+      data: { edge },
+    })
+    tabStore.markDirty(tabStore.activeTabId ?? '')
+  }
 })
 
 // Sync selection with canvas store using Vue Flow getters
@@ -134,12 +199,17 @@ function onPaneClick(event: MouseEvent) {
   dragDropStore.endDrag()
 }
 
-// Keyboard handler for canceling placement
+// Global keyboard handler
 function onKeyDown(event: KeyboardEvent) {
+  // Handle placement mode cancel
   if (event.key === 'Escape' && dragDropStore.isDragging) {
     console.log('Placement canceled via Escape key')
     dragDropStore.endDrag()
+    return
   }
+
+  // Handle other shortcuts
+  keyboardHandler.handleKeyDown(event)
 }
 
 onMounted(() => {
@@ -160,9 +230,15 @@ function addNodeToCanvas(nodeType: NodeType, position: { x: number; y: number })
     data: { ...node, inputs: node.inputs, outputs: node.outputs },
   })
 
-  const f = currentFlowId.value ? flowStore.flows[currentFlowId.value] : undefined
-  if (f) {
-    f.nodes[node.id] = node
+  const flow = currentFlow.value
+  if (flow) {
+    flow.nodes[node.id] = node
+    historyStore.pushAction({
+      type: 'add_node',
+      timestamp: Date.now(),
+      data: { node },
+    })
+    tabStore.markDirty(tabStore.activeTabId ?? '')
   }
 
   console.log('Node added, total nodes:', nodes.value.length)

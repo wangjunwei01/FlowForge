@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, markRaw } from 'vue'
 import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
@@ -17,15 +17,15 @@ import MockNode from '@/components/nodes/MockNode.vue'
 const flowStore = useFlowStore()
 const dragDropStore = useDragDropStore()
 
-// Node types for Vue Flow
+// Node types for Vue Flow — markRaw prevents Vue from making components reactive
 const nodeTypes = {
-  HTTP_REQUEST: HTTPNode,
-  GRPC_REQUEST: GRPCNode,
-  WEBSOCKET: WebSocketNode,
-  SSE: SSENode,
-  SCRIPT: ScriptNode,
-  DATA_TRANSFORM: TransformNode,
-  MOCK: MockNode,
+  HTTP_REQUEST: markRaw(HTTPNode),
+  GRPC_REQUEST: markRaw(GRPCNode),
+  WEBSOCKET: markRaw(WebSocketNode),
+  SSE: markRaw(SSENode),
+  SCRIPT: markRaw(ScriptNode),
+  DATA_TRANSFORM: markRaw(TransformNode),
+  MOCK: markRaw(MockNode),
 }
 
 // Local reactive state for Vue Flow

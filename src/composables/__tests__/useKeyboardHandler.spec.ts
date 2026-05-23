@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useKeyboardHandler } from '@/composables/useKeyboardHandler'
 import { useCanvasStore } from '@/stores/canvas'
@@ -43,9 +43,10 @@ describe('useKeyboardHandler', () => {
           },
         },
         edges: {},
+        variables: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        schemaVersion: '1.0.0',
+        schemaVersion: 1,
       }
       flowStore.currentFlowId = 'test-flow'
       canvasStore.selectedNodeIds.add('node-1')
@@ -85,9 +86,10 @@ describe('useKeyboardHandler', () => {
           },
         },
         edges: {},
+        variables: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        schemaVersion: '1.0.0',
+        schemaVersion: 1,
       }
       flowStore.currentFlowId = 'test-flow'
 

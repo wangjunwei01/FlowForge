@@ -13,7 +13,7 @@
 | TODO3 | Rust 后端服务层 | P0 | ✅ 通过 | 2026-05-23 | Claude Code | 编译+36测试全通过，gRPC为骨架 |
 | TODO4 | 数据存储与持久化 | P0 | ✅ 通过 | 2026-05-23 | Claude Code | 编译+86测试全通过(前端46+Rust40) |
 | TODO5 | 画布系统 | P0 | ✅ 通过 | 2026-05-23 | Claude Code | Vue Flow集成，7种节点，53测试全通过 |
-| TODO6 | 状态管理与交互 | P0 | ⬜ 未开始 | - | - | |
+| TODO6 | 状态管理与交互 | P0 | ✅ 通过 | 2026-05-23 | Claude Code | 撤销/重做，快捷键，剪贴板，70测试全通过 |
 | TODO7 | HTTP 节点与请求 | P0 | ⬜ 未开始 | - | - | |
 | TODO8 | 数据映射与脚本 | P0 | ⬜ 未开始 | - | - | |
 | TODO9 | 流程执行引擎 | P0 | ⬜ 未开始 | - | - | |
@@ -190,22 +190,22 @@
 
 | # | 验收项 | 通过条件 | 结果 | 测试日期 | 备注 |
 |---|--------|----------|------|----------|------|
-| 1 | Canvas Store | 节点和连线可正确增删改查 | ⬜ | | |
-| 2 | Tab Store | 标签可打开/切换/关闭，未保存标记正确 | ⬜ | | |
-| 3 | 撤销/重做 | Ctrl+Z 撤销、Ctrl+Y 重做 | ⬜ | | |
-| 4 | 历史栈限制 | 超过 50 条历史后自动丢弃最早的 | ⬜ | | |
-| 5 | 批量操作 | 多选移动视为单个原子操作 | ⬜ | | |
-| 6 | 快捷键 | Copy/Paste/Delete/SelectAll 快捷键正常 | ⬜ | | |
-| 7 | 剪贴板 | 复制粘贴后 ID 重新生成 | ⬜ | | |
-| 8 | Store 同步 | Store 与 Vue Flow 数据双向同步 | ⬜ | | |
-| 9 | 单元测试 | 所有 Store 和 composable 测试通过 | ⬜ | | |
+| 1 | Canvas Store | 节点和连线可正确增删改查 | ✅ | 2026-05-23 | useCanvasStore + onNodesChange/onEdgesChange 同步 |
+| 2 | Tab Store | 标签可打开/切换/关闭，未保存标记正确 | ✅ | 2026-05-23 | useTabStore + markDirty/markClean |
+| 3 | 撤销/重做 | Ctrl+Z 撤销、Ctrl+Y 重做 | ✅ | 2026-05-23 | useHistoryStore + useKeyboardHandler，快捷键已绑定 |
+| 4 | 历史栈限制 | 超过 50 条历史后自动丢弃最早的 | ✅ | 2026-05-23 | MAX_HISTORY_SIZE=50，单元测试覆盖 |
+| 5 | 批量操作 | 多选移动视为单个原子操作 | ✅ | 2026-05-23 | startBatch/endBatch 合并为 batch action |
+| 6 | 快捷键 | Copy/Paste/Delete/SelectAll 快捷键正常 | ✅ | 2026-05-23 | useKeyboardHandler: Ctrl+C/V, Delete, Ctrl+A |
+| 7 | 剪贴板 | 复制粘贴后 ID 重新生成 | ✅ | 2026-05-23 | paste() 生成新 ID: `node-${Date.now()}-${random}` |
+| 8 | Store 同步 | Store 与 Vue Flow 数据双向同步 | ✅ | 2026-05-23 | onNodesChange/onEdgesChange → flowStore |
+| 9 | 单元测试 | 所有 Store 和 composable 测试通过 | ✅ | 2026-05-23 | 70 tests / 13 suites 全通过 |
 
 ### 验收结论
 
-- 验收人：___________
-- 验收日期：___________
-- 验收结果：⬜ 通过 / ⬜ 不通过
-- 不通过原因：___________
+- 验收人：Claude Code
+- 验收日期：2026-05-23
+- 验收结果：✅ 通过
+- 全部 9 项核心验收通过，前端 70 个测试全部绿色
 
 ---
 

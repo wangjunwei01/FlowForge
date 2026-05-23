@@ -1,3 +1,15 @@
+pub mod error;
+pub mod execution;
+pub mod flow;
+pub mod grpc;
+pub mod mock;
+pub mod proto;
+pub mod request;
+pub mod response;
+pub mod script;
+pub mod sse;
+pub mod websocket;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

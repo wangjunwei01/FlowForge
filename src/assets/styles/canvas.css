@@ -1,0 +1,48 @@
+/* Vue Flow canvas styles */
+
+.vue-flow {
+  background: var(--canvas-bg);
+}
+
+.vue-flow__background {
+  background: var(--canvas-bg);
+}
+
+.vue-flow__edge-path {
+  stroke: var(--canvas-edge);
+}
+
+.vue-flow__edge.selected .vue-flow__edge-path,
+.vue-flow__edge:hover .vue-flow__edge-path {
+  stroke: var(--canvas-edge-selected);
+}
+
+.vue-flow__handle {
+  border: 2px solid #fff;
+}
+
+.vue-flow__connection-line path {
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+/* Dark mode overrides */
+[data-theme='dark'] .vue-flow {
+  background: var(--canvas-bg);
+}
+
+[data-theme='dark'] .vue-flow__background {
+  background: var(--canvas-bg);
+}
+
+[data-theme='dark'] .vue-flow__edge-path {
+  stroke: var(--canvas-edge);
+}
+
+[data-theme='dark'] .vue-flow__handle {
+  border-color: #1f2937;
+}
+
+[data-theme='dark'] .vue-flow__connection-line path {
+  stroke: var(--color-primary);
+}

@@ -1,20 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-
-export interface FlowNode {
-  id: string
-  type: string
-  position: { x: number; y: number }
-  data: Record<string, unknown>
-}
-
-export interface FlowEdge {
-  id: string
-  source: string
-  target: string
-  type?: string
-  data?: Record<string, unknown>
-}
+import type { FlowNode, FlowEdge } from '@/types'
+import { NodeType } from '@/types'
 
 export const useCanvasStore = defineStore('canvas', () => {
   const nodes = ref<Record<string, FlowNode>>({})
@@ -64,3 +51,5 @@ export const useCanvasStore = defineStore('canvas', () => {
     clearSelection,
   }
 })
+
+export { NodeType }

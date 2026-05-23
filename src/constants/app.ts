@@ -14,4 +14,4 @@ export const TAB_BAR_HEIGHT = 36
 export const AUTO_SAVE_DELAY = 5000
 export const MAX_HISTORY_SIZE = 50
 
-export const SCHEMA_VERSION = 1
+export { CURRENT_SCHEMA_VERSION as SCHEMA_VERSION } from './schema'

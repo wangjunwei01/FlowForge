@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCanvasStore } from '@/stores/canvas'
-import type { FlowNode, FlowEdge } from '@/stores/canvas'
+import type { FlowNode, FlowEdge } from '@/types'
+import { NodeType } from '@/types'
 
 describe('canvasStore', () => {
   beforeEach(() => {
@@ -10,7 +11,14 @@ describe('canvasStore', () => {
 
   it('should add and remove nodes', () => {
     const store = useCanvasStore()
-    const node: FlowNode = { id: '1', type: 'http-request', position: { x: 0, y: 0 }, data: {} }
+    const node: FlowNode = {
+      id: '1',
+      type: NodeType.HTTP_REQUEST,
+      position: { x: 0, y: 0 },
+      data: { label: 'Test Node', method: 'GET', url: 'https://example.com', headers: {}, params: {} },
+      inputs: [],
+      outputs: [],
+    }
     store.addNode(node)
     expect(store.nodes['1']).toEqual(node)
     store.removeNode('1')
@@ -19,7 +27,14 @@ describe('canvasStore', () => {
 
   it('should add and remove edges', () => {
     const store = useCanvasStore()
-    const edge: FlowEdge = { id: 'e1', source: '1', target: '2' }
+    const edge: FlowEdge = {
+      id: 'e1',
+      source: '1',
+      sourceHandle: 'out-1',
+      target: '2',
+      targetHandle: 'in-1',
+      dataMapping: [],
+    }
     store.addEdge(edge)
     expect(store.edges['e1']).toEqual(edge)
     store.removeEdge('e1')

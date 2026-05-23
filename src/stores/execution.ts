@@ -1,22 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { ExecutionRecord } from '@/types'
 
 type ExecutionStatus = 'idle' | 'running' | 'completed' | 'failed' | 'paused'
 
-export interface ExecutionLog {
-  nodeId: string
-  nodeName: string
-  status: 'success' | 'failed' | 'skipped'
-  duration: number
-  timestamp: number
-  error?: string
-}
-
 export const useExecutionStore = defineStore('execution', () => {
   const status = ref<ExecutionStatus>('idle')
-  const logs = ref<ExecutionLog[]>([])
-  const startTime = ref<number | null>(null)
-  const endTime = ref<number | null>(null)
+  const logs = ref<ExecutionRecord[]>([])
+  const startTime = ref<string | null>(null)
+  const endTime = ref<string | null>(null)
 
   function reset(): void {
     status.value = 'idle'
@@ -25,8 +17,8 @@ export const useExecutionStore = defineStore('execution', () => {
     endTime.value = null
   }
 
-  function addLog(log: ExecutionLog): void {
-    logs.value.push(log)
+  function addLog(record: ExecutionRecord): void {
+    logs.value.push(record)
   }
 
   return {

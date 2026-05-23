@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
+import SidebarPanel from '@/components/panels/SidebarPanel.vue'
+import ConfigPanel from '@/components/panels/ConfigPanel.vue'
 
 const { currentTheme, toggleTheme } = useTheme()
 const { locale } = useI18n()
@@ -25,17 +27,13 @@ function toggleLocale() {
     </header>
     <div class="layout-body">
       <aside class="layout-sidebar">
-        <div class="sidebar-content">
-          <p>{{ $t('sidebar.nodes') }}</p>
-        </div>
+        <SidebarPanel />
       </aside>
       <main class="layout-main">
         <router-view />
       </main>
       <aside class="layout-config-panel">
-        <div class="config-content">
-          <p>Config Panel</p>
-        </div>
+        <ConfigPanel />
       </aside>
     </div>
   </div>
@@ -104,10 +102,6 @@ function toggleLocale() {
   flex-shrink: 0;
 }
 
-.sidebar-content {
-  padding: 12px;
-}
-
 .layout-main {
   flex: 1;
   overflow: hidden;
@@ -120,9 +114,5 @@ function toggleLocale() {
   border-left: 1px solid var(--border-color);
   overflow-y: auto;
   flex-shrink: 0;
-}
-
-.config-content {
-  padding: 12px;
 }
 </style>

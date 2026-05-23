@@ -22,6 +22,41 @@ anyhow = "1"
 thiserror = "2"
 log = "0.4"
 
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "stream", "rustls-tls", "socks", "cookies"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures-util = "0.3"
+
+# Utilities
+uuid = { version = "1", features = ["v4"] }
+regex = "1"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Script engine
+rquickjs = { version = "0.7", features = ["loader"] }
+
+# Mock server
+axum = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
+
+# gRPC (skeleton for now)
+tonic = "0.12"
+prost = "0.13"
+prost-types = "0.13"
+prost-reflect = "0.14"
+
+# WebSocket
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
+
+# Keyring
+keyring = "3"
+
+[dev-dependencies]
+mockito = "1"
+
 [profile.release]
 lto = true
 codegen-units = 1

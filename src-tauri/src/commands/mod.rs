@@ -1,4 +1,10 @@
-#[tauri::command]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}! Welcome to FlowForge.", name)
-}
+pub mod grpc;
+pub mod greet;
+pub mod http;
+pub mod keyring;
+pub mod mock;
+pub mod proto;
+pub mod script;
+pub mod sse;
+pub mod store;
+pub mod websocket;

@@ -1,28 +1,21 @@
 export enum NodeType {
-  HttpRequest = 'http-request',
-  HttpResponse = 'http-response',
-  Grpc = 'grpc',
-  WebSocket = 'websocket',
-  SSE = 'sse',
-  Script = 'script',
-  Transform = 'transform',
-  Mock = 'mock',
+  HTTP_REQUEST = 'HTTP_REQUEST',
+  GRPC_REQUEST = 'GRPC_REQUEST',
+  WEBSOCKET = 'WEBSOCKET',
+  SSE = 'SSE',
+  SCRIPT = 'SCRIPT',
+  DATA_TRANSFORM = 'DATA_TRANSFORM',
+  MOCK = 'MOCK',
 }
 
-export enum FlowStatus {
-  Draft = 'draft',
-  Saved = 'saved',
-  Running = 'running',
-  Completed = 'completed',
-  Failed = 'failed',
-}
+export const NODE_TYPE_LIST = Object.values(NodeType)
 
-export enum ExecutionStatus {
-  Idle = 'idle',
-  Running = 'running',
-  Paused = 'paused',
-  Completed = 'completed',
-  Failed = 'failed',
+export const NODE_TYPE_LABELS: Record<NodeType, string> = {
+  [NodeType.HTTP_REQUEST]: 'HTTP Request',
+  [NodeType.GRPC_REQUEST]: 'gRPC Request',
+  [NodeType.WEBSOCKET]: 'WebSocket',
+  [NodeType.SSE]: 'SSE',
+  [NodeType.SCRIPT]: 'Script',
+  [NodeType.DATA_TRANSFORM]: 'Data Transform',
+  [NodeType.MOCK]: 'Mock Server',
 }
-
-export const NODE_TYPES = Object.values(NodeType)

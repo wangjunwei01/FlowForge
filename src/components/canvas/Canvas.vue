@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, markRaw } from 'vue'
-import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge, type NodeMouseEvent, type EdgeMouseEvent } from '@vue-flow/core'
+import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge, type NodeMouseEvent, type EdgeMouseEvent, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
 import { NodeType } from '@/types'
@@ -58,6 +58,7 @@ watch(currentFlow, (f) => {
       targetHandle: edge.targetHandle,
       type: 'smoothstep',
       animated: true,
+      markerEnd: MarkerType.ArrowClosed,
     }))
     console.log('Canvas initialized with', nodes.value.length, 'nodes')
   }
@@ -85,6 +86,7 @@ onConnect((params: Connection) => {
     targetHandle: edge.targetHandle,
     type: 'smoothstep',
     animated: true,
+    markerEnd: MarkerType.ArrowClosed,
   })
 })
 

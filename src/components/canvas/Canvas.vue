@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, markRaw } from 'vue'
-import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge } from '@vue-flow/core'
+import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge, type NodeMouseEvent, type EdgeMouseEvent } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
 import { NodeType } from '@/types'
@@ -100,14 +100,14 @@ const emit = defineEmits<{
   (e: 'pane-contextmenu', event: MouseEvent): void
 }>()
 
-function onNodeContextMenu(event: MouseEvent, node: { id: string }) {
-  event.preventDefault()
-  emit('node-contextmenu', event, node.id)
+function onNodeContextMenu(params: NodeMouseEvent) {
+  params.event.preventDefault()
+  emit('node-contextmenu', params.event as MouseEvent, params.node.id)
 }
 
-function onEdgeContextMenu(event: MouseEvent, edge: { id: string }) {
-  event.preventDefault()
-  emit('edge-contextmenu', event, edge.id)
+function onEdgeContextMenu(params: EdgeMouseEvent) {
+  params.event.preventDefault()
+  emit('edge-contextmenu', params.event as MouseEvent, params.edge.id)
 }
 
 function onPaneContextMenu(event: MouseEvent) {

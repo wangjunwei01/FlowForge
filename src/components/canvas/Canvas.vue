@@ -1,64 +1,68 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { VueFlow, useVueFlow, type Connection, ConnectionMode } from '@vue-flow/core'
+import { VueFlow, useVueFlow, type Connection, ConnectionMode, type Node, type Edge } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import type { FlowNode, FlowEdge } from '@/types'
 import { NodeType } from '@/types'
-import { useCanvasStore } from '@/stores/canvas'
 import { useFlowStore } from '@/stores/flow'
-import { nodeComponents } from '@/components/nodes'
+import HTTPNode from '@/components/nodes/HTTPNode.vue'
+import GRPCNode from '@/components/nodes/GRPCNode.vue'
+import WebSocketNode from '@/components/nodes/WebSocketNode.vue'
+import SSENode from '@/components/nodes/SSENode.vue'
+import ScriptNode from '@/components/nodes/ScriptNode.vue'
+import TransformNode from '@/components/nodes/TransformNode.vue'
+import MockNode from '@/components/nodes/MockNode.vue'
 
-const canvasStore = useCanvasStore()
 const flowStore = useFlowStore()
 
-// Local reactive nodes/edges for Vue Flow
-const localNodes = ref<any[]>([])
-const localEdges = ref<any[]>([])
+// Node types for Vue Flow - must be plain object with string keys
+const nodeTypes = {
+  HTTP_REQUEST: HTTPNode,
+  GRPC_REQUEST: GRPCNode,
+  WEBSOCKET: WebSocketNode,
+  SSE: SSENode,
+  SCRIPT: ScriptNode,
+  DATA_TRANSFORM: TransformNode,
+  MOCK: MockNode,
+}
+
+const flowId = computed(() => flowStore.currentFlowId)
+const flow = computed(() => flowId.value ? flowStore.flows[flowId.value!] : null)
+
+const nodes = ref<Node[]>([])
+const edges = ref<Edge[]>([])
 
 const {
   onConnect,
-  addNodes,
   project,
   fitView,
   onPaneReady,
 } = useVueFlow()
 
-const flowId = computed(() => flowStore.currentFlowId)
-const flow = computed(() => flowId.value ? flowStore.flows[flowId.value!] : null)
-
-// Sync canvas store nodes with local nodes for Vue Flow
-watch(() => canvasStore.nodes, (nodes) => {
-  localNodes.value = Object.values(nodes).map((node) => ({
-    id: node.id,
-    type: node.type,
-    position: node.position,
-    data: {
-      ...node,
-      inputs: node.inputs,
-      outputs: node.outputs,
-    },
-  }))
-}, { immediate: true, deep: true })
-
-// Sync canvas store edges with local edges for Vue Flow
-watch(() => canvasStore.edges, (edges) => {
-  localEdges.value = Object.values(edges).map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    sourceHandle: edge.sourceHandle,
-    target: edge.target,
-    targetHandle: edge.targetHandle,
-    type: 'smoothstep',
-    animated: true,
-  }))
-}, { immediate: true, deep: true })
-
-// Initialize from flow store if canvas is empty
+// Initialize from flow store
 watch(flow, (f) => {
-  if (f && Object.keys(canvasStore.nodes).length === 0) {
-    // Load nodes from flow into canvas store
-    Object.values(f.nodes).forEach(node => canvasStore.addNode(node))
-    Object.values(f.edges).forEach(edge => canvasStore.addEdge(edge))
+  if (f) {
+    // Load nodes from flow
+    nodes.value = Object.values(f.nodes).map((node) => ({
+      id: node.id,
+      type: node.type,
+      position: node.position,
+      data: {
+        ...node,
+        inputs: node.inputs,
+        outputs: node.outputs,
+      },
+    }))
+    // Load edges from flow
+    edges.value = Object.values(f.edges).map((edge) => ({
+      id: edge.id,
+      source: edge.source,
+      sourceHandle: edge.sourceHandle,
+      target: edge.target,
+      targetHandle: edge.targetHandle,
+      type: 'smoothstep',
+      animated: true,
+    }))
   }
 }, { immediate: true })
 
@@ -75,9 +79,18 @@ onConnect((params: Connection) => {
     targetHandle: params.targetHandle!,
     dataMapping: [],
   }
-  canvasStore.addEdge(edge)
 
-  // Also update flow store
+  edges.value.push({
+    id: edge.id,
+    source: edge.source,
+    sourceHandle: edge.sourceHandle,
+    target: edge.target,
+    targetHandle: edge.targetHandle,
+    type: 'smoothstep',
+    animated: true,
+  })
+
+  // Update flow store
   const f = flowId.value ? flowStore.flows[flowId.value] : undefined
   if (f) {
     f.edges[edge.id] = edge
@@ -106,27 +119,40 @@ function onPaneContextMenu(event: MouseEvent) {
 }
 
 function onDrop(event: DragEvent) {
+  event.preventDefault()
+
   const rawData = event.dataTransfer?.getData('application/flowforge-node')
-  if (!rawData) return
-
-  const { nodeType } = JSON.parse(rawData) as { nodeType: NodeType }
-  const bounds = (event.target as HTMLElement).getBoundingClientRect()
-  const position = project({
-    x: event.clientX - bounds.left,
-    y: event.clientY - bounds.top,
-  })
-
-  const node = createNode(nodeType, position)
-  canvasStore.addNode(node)
-
-  // Also update flow store
-  const f = flowId.value ? flowStore.flows[flowId.value] : undefined
-  if (f) {
-    f.nodes[node.id] = node
+  if (!rawData) {
+    console.log('No drag data found')
+    return
   }
 
-  // Add to Vue Flow directly
-  addNodes([{
+  let nodeType: NodeType
+  try {
+    const data = JSON.parse(rawData) as { nodeType: NodeType }
+    nodeType = data.nodeType
+  } catch (e) {
+    console.error('Failed to parse drag data:', e)
+    return
+  }
+
+  // Get the canvas element bounds
+  const canvasEl = (event.currentTarget as HTMLElement)
+  const bounds = canvasEl.getBoundingClientRect()
+
+  // Calculate position relative to canvas
+  const x = event.clientX - bounds.left
+  const y = event.clientY - bounds.top
+
+  // Project screen coordinates to flow coordinates
+  const position = project({ x, y })
+
+  console.log('Drop at position:', position, 'nodeType:', nodeType)
+
+  const node = createNode(nodeType, position)
+
+  // Add to Vue Flow nodes array
+  nodes.value.push({
     id: node.id,
     type: node.type,
     position: node.position,
@@ -135,7 +161,13 @@ function onDrop(event: DragEvent) {
       inputs: node.inputs,
       outputs: node.outputs,
     },
-  }])
+  })
+
+  // Also update flow store
+  const f = flowId.value ? flowStore.flows[flowId.value] : undefined
+  if (f) {
+    f.nodes[node.id] = node
+  }
 }
 
 function onDragOver(event: DragEvent) {
@@ -211,9 +243,9 @@ defineExpose({
     @dragover="onDragOver"
   >
     <VueFlow
-      v-model:nodes="localNodes"
-      v-model:edges="localEdges"
-      :node-types="nodeComponents"
+      v-model:nodes="nodes"
+      v-model:edges="edges"
+      :node-types="nodeTypes"
       :snap-to-grid="true"
       :snap-grid="[16, 16]"
       :connection-mode="ConnectionMode.Loose"
@@ -238,9 +270,12 @@ defineExpose({
 .canvas-container {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .vue-flow {
+  width: 100%;
+  height: 100%;
   background: var(--canvas-bg);
 }
 

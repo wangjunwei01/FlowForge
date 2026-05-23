@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { useTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '@/stores/settings'
 import SidebarPanel from '@/components/panels/SidebarPanel.vue'
 import ConfigPanel from '@/components/panels/ConfigPanel.vue'
 
 const { currentTheme, toggleTheme } = useTheme()
 const { locale } = useI18n()
+const settingsStore = useSettingsStore()
 
-function toggleLocale() {
-  locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+async function toggleLocale() {
+  const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+  locale.value = newLocale
+  await settingsStore.setLocale(newLocale)
 }
 </script>
 

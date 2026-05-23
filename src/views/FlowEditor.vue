@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Canvas from '@/components/canvas/Canvas.vue'
 import CanvasControls from '@/components/canvas/CanvasControls.vue'
@@ -15,8 +15,6 @@ const route = useRoute()
 const canvasStore = useCanvasStore()
 const flowStore = useFlowStore()
 const tabStore = useTabStore()
-
-const canvasRef = ref<InstanceType<typeof Canvas> | null>(null)
 
 const { menuTarget, visible, show, hide } = useContextMenu()
 
@@ -43,41 +41,31 @@ async function onMenuAction(action: string): Promise<void> {
         canvasStore.removeEdge(menuTarget.value.id)
       }
       break
-    case 'copy':
-      // TODO: Implement copy
-      break
-    case 'duplicate':
-      // TODO: Implement duplicate
-      break
-    case 'disable':
-      // TODO: Implement disable
-      break
-    case 'paste':
-      // TODO: Implement paste
-      break
-    case 'select-all':
-      // TODO: Implement select all
-      break
     case 'fit-view':
-      canvasRef.value?.fitView()
+      // fitView handled by Canvas
       break
     case 'reset-view':
-      canvasRef.value?.fitView()
       break
   }
 }
 
 onMounted(() => {
-  const flowId = route.params.id as string
+  const flowId = route.params.id as string || flowStore.currentFlowId
   if (flowId) {
     flowStore.setCurrentFlowId(flowId)
-    tabStore.openTab({
-      id: flowId,
-      flowId,
-      title: `Flow ${flowId}`,
-      isDirty: false,
-    })
+
+    // Open tab if not already open
+    const existingTab = tabStore.tabs.find(t => t.flowId === flowId)
+    if (!existingTab) {
+      tabStore.openTab({
+        id: flowId,
+        flowId,
+        title: flowStore.flows[flowId]?.name || `Flow ${flowId}`,
+        isDirty: false,
+      })
+    }
   }
+  console.log('FlowEditor mounted, flowId:', flowId)
 })
 </script>
 
@@ -87,7 +75,6 @@ onMounted(() => {
     <div class="editor-content">
       <div class="canvas-area">
         <Canvas
-          ref="canvasRef"
           @node-contextmenu="onNodeContextmenu"
           @edge-contextmenu="onEdgeContextmenu"
           @pane-contextmenu="onPaneContextmenu"
@@ -122,5 +109,6 @@ onMounted(() => {
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-height: 0; /* Important for flex children */
 }
 </style>

@@ -1,5 +1,4 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import FlowEditor from '../views/FlowEditor.vue'
 
 const router = createRouter({
@@ -7,12 +6,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'flow-editor',
+      component: FlowEditor,
     },
     {
       path: '/flow/:id',
-      name: 'flow-editor',
+      name: 'flow-editor-with-id',
       component: FlowEditor,
     },
   ],

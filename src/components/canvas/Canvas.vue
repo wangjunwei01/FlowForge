@@ -124,7 +124,12 @@ function onDrop(event: DragEvent) {
   event.preventDefault()
   console.log('Drop event triggered')
 
-  const rawData = event.dataTransfer?.getData('application/flowforge-node')
+  // Try text/plain first (more compatible)
+  let rawData = event.dataTransfer?.getData('text/plain')
+  if (!rawData) {
+    rawData = event.dataTransfer?.getData('application/flowforge-node')
+  }
+
   if (!rawData) {
     console.warn('No drag data found')
     return

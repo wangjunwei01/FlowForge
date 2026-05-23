@@ -1,36 +1,40 @@
 import { NodeType } from '@/types'
 
-const DRAG_DATA_KEY = 'application/flowforge-node'
-
 export function useDragDrop() {
   function onDragStart(event: DragEvent, nodeType: NodeType): void {
-    if (!event.dataTransfer) return
+    if (!event.dataTransfer) {
+      console.warn('No dataTransfer in dragstart')
+      return
+    }
 
+    // Use 'text/plain' for broader compatibility
     const data = JSON.stringify({ nodeType })
-    event.dataTransfer.setData(DRAG_DATA_KEY, data)
+    event.dataTransfer.setData('text/plain', data)
     event.dataTransfer.effectAllowed = 'move'
 
-    const ghost = document.createElement('div')
-    ghost.className = 'drag-ghost'
-    ghost.textContent = nodeType.replace(/_/g, ' ')
-    document.body.appendChild(ghost)
-
-    event.dataTransfer.setDragImage(ghost, 50, 20)
-
-    setTimeout(() => {
-      document.body.removeChild(ghost)
-    }, 0)
+    console.log('Drag started:', nodeType)
   }
 
   function getDragData(event: DragEvent): { nodeType: NodeType } | null {
     if (!event.dataTransfer) return null
 
-    const data = event.dataTransfer.getData(DRAG_DATA_KEY)
-    if (!data) return null
+    // Try text/plain first, then application/flowforge-node
+    let data = event.dataTransfer.getData('text/plain')
+    if (!data) {
+      data = event.dataTransfer.getData('application/flowforge-node')
+    }
+
+    if (!data) {
+      console.warn('No drag data found')
+      return null
+    }
 
     try {
-      return JSON.parse(data) as { nodeType: NodeType }
-    } catch {
+      const parsed = JSON.parse(data) as { nodeType: NodeType }
+      console.log('Got drag data:', parsed)
+      return parsed
+    } catch (e) {
+      console.error('Failed to parse drag data:', e)
       return null
     }
   }
